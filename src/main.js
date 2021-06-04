@@ -10,6 +10,9 @@ import * as targetApplication from './main/config/target-application';
 dotenv.config({ path: path.resolve(__dirname, '..', '.env.local') });
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const scheme = process.env.SCHEME_NAME || 'overlay';
+/**
+ * @type {ActiveWindow}
+ */
 let activeWindow;
 
 // Ensure we only ever have once instance of the application running
@@ -18,19 +21,13 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function createWindow() {
-  const { bounds } = screen.getPrimaryDisplay();
-
   const win = winMgr.createWindow('main', {
-    width: bounds.width,
-    height: bounds.height,
-    x: bounds.x,
-    y: bounds.y,
     transparent: false,
     frame: false,
     resizable: false,
     movable: false,
     focusable: false,
-    skipTaskbar: true,
+    skipTaskbar: false,
     show: false,
   });
 
@@ -55,6 +52,21 @@ function createWindow() {
 
   // start listening for when our target application is active
   activeWindow = new ActiveWindow(targetApplication);
+  // interval loop for available?
+  setInterval(async () => {
+    if (await activeWindow.applicationIsActive()) {
+      if (!win.isVisible()) {
+        const { bounds } = await activeWindow.activeWindow;
+        win.setBounds(bounds);
+        await win.loadURL(
+          process.env.WEBPACK_DEV_SERVER_URL ? process.env.WEBPACK_DEV_SERVER_URL : `${scheme}://./index.html`,
+        );
+        win.show();
+      }
+    } else {
+      win.hide();
+    }
+  }, 1000);
   return win;
 }
 

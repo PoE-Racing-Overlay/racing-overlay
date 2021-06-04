@@ -33,18 +33,31 @@ class WindowManager {
    */
   createWindow(key, options = {}) {
     const win = new BrowserWindow(
-      Object.assign(options, {
-        width: 800,
-        height: 600,
-        webPreferences: {
-          // Use pluginOptions.nodeIntegration, leave this alone
-          // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-          nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
-          preload: join(__dirname, 'preload.js'),
+      Object.assign(
+        {
+          width: 800,
+          height: 600,
+          webPreferences: {
+            // Use pluginOptions.nodeIntegration, leave this alone
+            // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
+            nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+            preload: join(__dirname, 'preload.js'),
+            worldSafeExecuteJavascript: true,
+            contextIsolation: true,
+          },
         },
-      }),
+        options,
+      ),
     );
     children.set(key, win);
+    return win;
+  }
+
+  createOrGetWindow(key, options = {}) {
+    const win = this.getWindow(key);
+    if (!win) {
+      return this.createWindow(key, options);
+    }
     return win;
   }
 

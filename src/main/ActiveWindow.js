@@ -1,12 +1,6 @@
 import activeWindow from 'active-win';
 import { basename } from 'path';
 
-/**
- * A global reference to the currently active window
- * @type {activeWindow.Result}
- */
-const activeWindow;
-
 export default class ActiveWindow {
   constructor(config = {}) {
     /**
@@ -27,23 +21,24 @@ export default class ActiveWindow {
    * @returns {Boolean}
    */
   async applicationIsActive() {
-    const old = this._activeWindow;
-    const current = this.activeWindow;
+    const current = await this.activeWindow;
     if (!current) {
       this.isActive = false;
       return this.isActive;
     }
-    if (old && current.id !== old.id) {
-      const path = current.owner.path;
-      const name = basename(path);
-      const title = current.title;
-      if (
-        this.config.names.includes(name) &&
-        this.config.titles.includes(title) &&
-        this.config.titleStartsWith.some(value => title.startsWith(value))
-      ) {
-        this.isActive = true;
-      }
+
+    const path = current.owner.path;
+    const name = basename(path);
+    const title = current.title;
+    console.log(title);
+    if (
+      this.config.names.includes(name) ||
+      this.config.titles.includes(title) ||
+      this.config.titlesStartsWith.some(value => title.startsWith(value))
+    ) {
+      this.isActive = true;
+    } else {
+      this.isActive = false;
     }
     return this.isActive;
   }
@@ -52,16 +47,20 @@ export default class ActiveWindow {
    * Get the currently active window
    * @returns {activeWindow.Result}
    */
-  async get activeWindow() {
-    this._activeWindow = await activeWindow();
-    return this._activeWindow;
+  get activeWindow() {
+    return (async () => {
+      this._activeWindow = await activeWindow();
+      return this._activeWindow;
+    })();
   }
 
   /**
    * Get the path to the application owning the current window
    * @returns {string}
    */
-  async get applicationPath() {
-    this.activeWindow.owner.path;
+  get applicationPath() {
+    return (async () => {
+      return await this.activeWindow.owner.path;
+    })();
   }
 }
